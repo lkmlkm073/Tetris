@@ -74,14 +74,14 @@ void updateTile(){
     GLfloat x = tilepos.x + tile[i].x;
     GLfloat y = tilepos.y + tile[i].y;
 
-    vec4 p1 = vec4(frame + (x * spacing), frame + (y * spacing), 0.4, 1);
-    vec4 p2 = vec4(frame + (x * spacing), frame + (y * spacing) + spacing, 0.4, 1);
-    vec4 p3 = vec4(frame + (x * spacing) + spacing, frame + (y * spacing), 0.4, 1);
-    vec4 p4 = vec4(frame + (x * spacing) + spacing, frame + (y * spacing) + spacing, 0.4, 1);
+    vec2 p1 = vec2(frame + (x * spacing), frame + (y * spacing));
+    vec2 p2 = vec2(frame + (x * spacing), frame + (y * spacing) + spacing);
+    vec2 p3 = vec2(frame + (x * spacing) + spacing, frame + (y * spacing));
+    vec2 p4 = vec2(frame + (x * spacing) + spacing, frame + (y * spacing) + spacing);
 
-    vec4 newPoints[6] = {p1, p2, p3, p2, p3, p4};
+    vec2 newPoints[6] = {p1, p2, p3, p2, p3, p4};
 
-    glBufferSubData(GL_ARRAY_BUFFER, i * 6 * sizeof(vec4), 6 * sizeof(vec4), newPoints);
+    glBufferSubData(GL_ARRAY_BUFFER, i * 6 * sizeof(vec2), 6 * sizeof(vec2), newPoints);
   }
   glBindVertexArray(0);
 }
