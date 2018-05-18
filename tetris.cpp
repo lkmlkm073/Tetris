@@ -23,7 +23,7 @@ vec2 points_for_block[24];
 vec3 colors_for_block[24];
 
 vec2 tile[4];                     // each tile composed of 4 cells, i.e. 2d vectors from the centre cell
-vec2 tilepos = vec2(5, 19);        // starting position
+vec2 tilepos;        // starting position
 
 // vao
 GLuint grid;
@@ -56,8 +56,9 @@ enum block_type{
   J,
   T
 };
-int current_block_type;
 
+int current_block_type;
+int I_case;
 
 int random(int bound){
   random_device r;
@@ -69,7 +70,7 @@ int random(int bound){
 
 void updateTile(){
   glBindBuffer(GL_ARRAY_BUFFER, buffer_block[0]);
-
+  int count = 0;
   for(int i = 0; i < 4; i++){
     GLfloat x = tilepos.x + tile[i].x;
     GLfloat y = tilepos.y + tile[i].y;
@@ -80,9 +81,14 @@ void updateTile(){
     vec2 p4 = vec2(frame + (x * spacing) + spacing, frame + (y * spacing) + spacing);
 
     vec2 newPoints[6] = {p1, p2, p3, p2, p3, p4};
-
-    glBufferSubData(GL_ARRAY_BUFFER, i * 6 * sizeof(vec2), 6 * sizeof(vec2), newPoints);
+    for(int j = 0; j < 6; j++){
+      points_for_block[count] = newPoints[j];
+      count++;
+    }
+    // glBufferSubData(GL_ARRAY_BUFFER, i * 6 * sizeof(vec2), 6 * sizeof(vec2), newPoints);
   }
+  count = 0;
+  glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(points_for_block), points_for_block);
   glBindVertexArray(0);
 }
 
@@ -90,6 +96,7 @@ void newTile(){
   tilepos = vec2(5,19); // place the block in the middle of the board (** change)
   int tile_type = random(6);
   current_block_type = tile_type;
+  I_case = tile_type;           // if I_case is 1, then tile is I
 
   for(int i = 0; i < 4; i++){
     switch(tile_type){
@@ -133,6 +140,13 @@ void newTile(){
     printf("Gameover!!");
 
     exit(EXIT_SUCCESS);
+  }
+}
+void rotate(){
+  mat2 rotation = mat2(0, 1,
+                      -1, 0);
+  for(int i = 0; i < 4; i++){
+    tile[i] = rotation * tile[i];
   }
 }
 
@@ -323,60 +337,105 @@ void keyboard( unsigned char key, int x, int y){
 }
 void keyboardSpecial( int key, int x, int y){
   switch (key){
+    case GLUT_KEY_UP:
+      if(tilepos.x < 1){
+        tilepos = tilepos + vec2(1.0, 0);
+        if(I_case == 1){
+          tilepos = tilepos + vec2(1.0, 0);
+        }
+        rotate();
+        updateTile();
+      }
+      else if(tilepos.x > 8){
+        tilepos = tilepos + vec2(-1.0, 0);
+        if(I_case == 1){
+          tilepos = tilepos + vec2(-1.0, 0);
+        }
+        rotate();
+        updateTile();
+      }else{
+        rotate();
+        updateTile();
+      }
+      // rotate();
+      // updateTile();
+      break;
     // press down arrow key, drop the block faster
     case GLUT_KEY_DOWN:
       if (min_y() > frame){
-        for(int i = 0; i < 24; i++){
-          points_for_block[i] = points_for_block[i] - vec2(0.0, spacing);
-          colors_for_board[i] = vec3(1.0,0.0,0.0);
-        }
+        // glBindBuffer(GL_ARRAY_BUFFER, buffer_block[0]);
+        // for(int i = 0; i < 24; i++){
+        //   points_for_block[i] = points_for_block[i] - vec2(0.0, spacing);
+        // }
+        // glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(points_for_block), points_for_block);
+        tilepos = tilepos - vec2(0, 1.0);
+        updateTile();
         glutPostRedisplay();
       }
       break;
     // press left arrow key, move to left
     case GLUT_KEY_LEFT:
       if (min_x() > frame){
-        for(int i = 0; i < 24; i++){
-          points_for_block[i] = points_for_block[i] - vec2(spacing, 0.0);
-        }
+        // glBindBuffer(GL_ARRAY_BUFFER, buffer_block[0]);
+        // for(int i = 0; i < 24; i++){
+        //   points_for_block[i] = points_for_block[i] - vec2(spacing, 0.0);
+        // }
+        // glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(points_for_block), points_for_block);
+        tilepos = tilepos - vec2(1.0, 0);
+        updateTile();
+        glutPostRedisplay();
       }
-      glutPostRedisplay();
       break;
     // press right arrow key, move to right
     case GLUT_KEY_RIGHT:
       if (max_x() < window_size_x - frame){
-        for(int i = 0; i < 24; i++){
-          points_for_block[i] = points_for_block[i] + vec2(spacing, 0.0);
-        }
+        // glBindBuffer(GL_ARRAY_BUFFER, buffer_block[0]);
+        // for(int i = 0; i < 24; i++){
+        //   points_for_block[i] = points_for_block[i] + vec2(spacing, 0.0);
+        // }
+        // glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(points_for_block), points_for_block);
+        tilepos = tilepos + vec2(1.0, 0);
+        updateTile();
+        glutPostRedisplay();
       }
-      glutPostRedisplay();
       break;
   }
 }
 //==============================================================================
-// change the color of board (does not work)
-// void find_location(){
-//   glBindVertexArray(board);
-//   glBindBuffer(GL_ARRAY_BUFFER, buffer_color);
-//   for(int i = 0; i < 1200; i++){
-//     if(points_for_board[i] == points_for_block[i]){
-//         colors_for_board[i] = vec3(0.0, 1.0, 0.0);
-//       }
-//   }
-// }
+// change the color of board
+void find_location(){
+  for(int i = 0; i < 24; i++){
+    for(int j = 0; j < 1200; j++){
+      if((points_for_block[i].x == points_for_board[j].x) && (points_for_block[i].y == points_for_board[j].y)){
+        colors_for_board[j] = vec3(0.5, 0.5, 0.5);
+      }
+    }
+  }
+  glBindBuffer(GL_ARRAY_BUFFER, buffer_board[1]);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(colors_for_board), colors_for_board, GL_DYNAMIC_DRAW);
+
+  newTile();
+}
 // slowly moves the block down
 void dropDelay(int){
   if(min_y() > frame){
-    for(int i = 0; i < 24; i++){
-      points_for_block[i] = points_for_block[i] - vec2(0.0, spacing);
-    }
+    // glBindBuffer(GL_ARRAY_BUFFER, buffer_block[0]);
+    // for(int i = 0; i < 24; i++){
+    //   points_for_block[i] = points_for_block[i] - vec2(0.0, spacing);
+    // }
+    // glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(points_for_block), points_for_block);
+    tilepos = tilepos - vec2(0, 1.0);
+    updateTile();
+  }
+  if(min_y() == frame){
+    find_location();
   }
   glutPostRedisplay();
   glutTimerFunc(500.0, dropDelay, 0);
 }
-void idle(void){
-  glutPostRedisplay();
-}
+// void idle(void){
+//   glutPostRedisplay();
+// }
 //==============================================================================
 // avoid the window reshaping
 void resize(int width, int height) {
@@ -398,7 +457,7 @@ int main(int argc, char* argv[]){
 
   glutKeyboardFunc(keyboard);
   glutSpecialFunc(keyboardSpecial);
-  glutIdleFunc(idle);
+  // glutIdleFunc(idle);
   glutTimerFunc(500.0, dropDelay, 0);
 
   glutMainLoop();
